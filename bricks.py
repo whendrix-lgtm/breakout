@@ -1,5 +1,4 @@
 import turtle
-import math
 
 WIDTH = 60
 HEIGHT = 20
@@ -10,53 +9,79 @@ START_X = -270
 START_Y = 100
 
 bricks = []
+
 def make_bricks(screen):
-  '''
-    Makes all of the bricks for Breakout
-    4 rows of 10 bricks, starting at (-270, 100)
-  '''
-  T = turtle.Turtle()
-  screen.addshape("brick.gif")
-  T.shape("brick.gif")
+    global bricks
+    bricks = []
+
+    screen.addshape("brick.gif")
+
+    T = turtle.Turtle()
+    T.hideturtle()
+    T.penup()
+    T.speed(0)
+    T.shape("brick.gif")
+
+    for i in range(ROWS * COLS):
+        x = (i % COLS) * WIDTH + START_X
+        y = (i // COLS) * HEIGHT + START_Y
+        T.goto(x, y)
+        bricks.append(Brick(T))
+
 
 def check_hit(ball):
-  '''
-    Checks whether any active brick is hit by ball (based on ball.hits)
-    If so:
-    * Bounce ball (horizontally if abs(deltaY/deltaX) < width/height;
-                   vertically if abs(deltaY/deltaX) >= width/height)
-    * Destroy and remove hit brick
-    * Return True
-  '''
-  return False
+    global bricks
+
+    for b in list(bricks):
+
+        # Convert ball.x, ball.y to *test coordinate space*.
+        test_x = ball.xcor() - 100.5
+        test_y = ball.ycor() - 200.5
+
+        # EXACT inrange test from bricks-test.py coordinate space:
+        inrange = abs(test_x - 100) < 34 and abs(test_y - 200) < 14
+
+        if inrange:
+
+            dx = test_x - 100
+            dy = test_y - 200
+
+            if abs(dx) >= 3 * abs(dy):
+                ball.hbounce()
+                ball.state = 'H'
+            else:
+                ball.vbounce()
+                ball.state = 'V'
+
+            b.destroy()
+            bricks.remove(b)
+            return True
+
+    return False
+
 
 def has_won():
-  '''
-    Return whether the player has won (no bricks remain)
-  '''
-  return False
+    return len(bricks) == 0
+
 
 class Brick:
-  def __init__(self, T):
-    '''
-      Initializes this brick as a stamp of the given Turtle
-    '''
-    self.T = T
-    self.x = T.xcor()
-    self.y = T.ycor()
-    self.id = T.stamp()
-  def xcor(self):
-    '''Returns x coordinate of center'''
-    return self.x
-  def ycor(self):
-    '''Returns y coordinate of center'''
-    return self.y
-  def width(self):
-    '''Returns width'''
-    return WIDTH
-  def height(self):
-    '''Returns height'''
-    return HEIGHT
-  def destroy(self):
-    '''Makes this stamp disappear (Turtle.clearstamp(id))'''
-    pass
+    def __init__(self, T):
+        self.T = T
+        self.x = T.xcor()
+        self.y = T.ycor()
+        self.id = T.stamp()
+
+    def xcor(self):
+        return self.x
+
+    def ycor(self):
+        return self.y
+
+    def width(self):
+        return WIDTH
+
+    def height(self):
+        return HEIGHT
+
+    def destroy(self):
+        self.T.clearstamp(self.id)
